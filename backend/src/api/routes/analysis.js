@@ -29,34 +29,49 @@ router.post('/generate', async (req, res) => {
 
         // 2. Get baseline statistics
         const baselineStats = await getBaselineStatistics(30);
-        if (!baselineStats || baselineStats.data_points < 3) {
+        if (!baselineStats || baselineStats.data_points < 1) {
             return res.status(400).json({
                 success: false,
                 error: 'Insufficient data',
-                message: `Need at least 3 data points, found ${baselineStats?.data_points || 0}`
+                message: `Need at least 1 data point, found ${baselineStats?.data_points || 0}. Please wait for data collection to run.`
             });
         }
+
+        // Log data availability
+        logger.info(`Analysis using ${baselineStats.data_points} data points from ${baselineStats.period_days} day period`);
 
         // 3. Get recent historical data (last 24 hours)
         const recentData = await queries.getTimeSeriesData(24);
 
         // 4. Calculate deviations for the report
-        const tvlDeviation = currentData.tvl_eth && baselineStats.tvl_avg
+        // For single data point, baseline avg equals current value, so deviation is 0
+        const tvlDeviation = currentData.tvl_eth && baselineStats.tvl_avg && baselineStats.tvl_avg > 0
             ? ((currentData.tvl_eth - baselineStats.tvl_avg) / baselineStats.tvl_avg) * 100
             : 0;
 
         const pegDeviation = Math.abs((currentData.eeth_eth_ratio || 1.0) - 1.0) * 100;
 
-        const gasDeviation = currentData.avg_gas_price_gwei && baselineStats.gas_avg
+        const gasDeviation = currentData.avg_gas_price_gwei && baselineStats.gas_avg && baselineStats.gas_avg > 0
             ? ((currentData.avg_gas_price_gwei - baselineStats.gas_avg) / baselineStats.gas_avg) * 100
             : 0;
 
+        // Log the calculated deviations
+        logger.debug('Deviations calculated', {
+            tvl: `${tvlDeviation.toFixed(2)}%`,
+            peg: `${pegDeviation.toFixed(3)}%`,
+            gas: `${gasDeviation.toFixed(1)}%`,
+            dataPoints: baselineStats.data_points
+        });
+
         // 5. Create trigger data for Claude
+        const limitedData = baselineStats.data_points < 10;
         const triggerData = {
             timestamp: currentData.timestamp,
             isAnomalous: Math.abs(tvlDeviation) > 5 || pegDeviation > 0.3 || Math.abs(gasDeviation) > 20,
             shouldCallClaude: true,
-            maxSeverity: 'MEDIUM',
+            maxSeverity: limitedData ? 'LOW' : 'MEDIUM',
+            limitedBaseline: limitedData,
+            baselineDataPoints: baselineStats.data_points,
             triggers: [
                 {
                     metric: 'tvl',
