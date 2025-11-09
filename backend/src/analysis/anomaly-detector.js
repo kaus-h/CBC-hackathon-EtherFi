@@ -411,8 +411,8 @@ async function getDetectionStats() {
                 anomalousChecks: parseInt(stats.anomalous_count) || 0,
                 normalChecks: parseInt(stats.normal_count) || 0,
                 claudeCalls: parseInt(stats.claude_calls) || 0,
-                lastCheck: stats.last_check,
-                lastClaudeCall: stats.last_claude_call
+                lastCheck: stats.last_check ? stats.last_check.toISOString() : null,
+                lastClaudeCall: stats.last_claude_call ? stats.last_claude_call.toISOString() : null
             },
             rateLimit: {
                 minIntervalMinutes: RATE_LIMIT.minIntervalMs / (60 * 1000),
