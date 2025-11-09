@@ -56,6 +56,7 @@ const anomaliesRoutes = require('./routes/anomalies');
 const baselineRoutes = require('./routes/baseline');
 const sentimentRoutes = require('./routes/sentiment');
 const systemRoutes = require('./routes/system');
+const analysisRoutes = require('./routes/analysis');
 
 // Mount routes
 app.use('/api/health', healthRoutes);
@@ -64,6 +65,7 @@ app.use('/api/anomalies', anomaliesRoutes);
 app.use('/api/baseline', baselineRoutes);
 app.use('/api/sentiment', sentimentRoutes);
 app.use('/api/system', systemRoutes);
+app.use('/api/analysis', analysisRoutes);
 
 // Root endpoint
 app.get('/api', (req, res) => {
@@ -78,7 +80,8 @@ app.get('/api', (req, res) => {
             '/api/anomalies',
             '/api/baseline',
             '/api/sentiment',
-            '/api/system/status'
+            '/api/system/status',
+            '/api/analysis/generate'
         ]
     });
 });
