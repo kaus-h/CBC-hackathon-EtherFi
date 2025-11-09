@@ -5,6 +5,7 @@ import MetricsPanel from './MetricsPanel';
 import AnomalyFeed from './AnomalyFeed';
 import Charts from './Charts';
 import SystemStatus from './SystemStatus';
+import AnalysisButton from './AnalysisButton';
 import api from '../services/api';
 import websocketService from '../services/websocket';
 
@@ -222,6 +223,9 @@ function Dashboard() {
           </div>
           <MetricsPanel metrics={metrics} />
         </motion.section>
+
+        {/* Manual Analysis Button */}
+        <AnalysisButton />
 
         {/* Charts and Anomalies Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
