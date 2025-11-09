@@ -12,6 +12,7 @@ const db = require('../database/db-connection');
 const queries = require('../database/queries');
 const logger = require('../utils/logger');
 const contracts = require('../../config/contracts');
+const { detectAnomalies } = require('../analysis/anomaly-detector');
 
 /**
  * Initialize Alchemy provider
@@ -511,6 +512,47 @@ async function collectCurrentData() {
         logger.info(`  Gas Price: ${dataPoint.avg_gas_price_gwei?.toFixed(2)} gwei`);
         logger.info(`  Top Whales Tracked: ${whales.length}`);
         logger.info('========================================');
+
+        // ====== PHASE 5 INTEGRATION: RUN ANOMALY DETECTION ======
+        // Run anomaly detection after successful data collection
+        try {
+            logger.info('Running anomaly detection...');
+            const anomalyResult = await detectAnomalies();
+
+            if (anomalyResult.success) {
+                if (anomalyResult.claudeCalled) {
+                    logger.info('🔔 Anomaly detection completed with Claude analysis', {
+                        anomaliesFound: anomalyResult.claudeResult?.anomalies?.length || 0,
+                        prefilterTriggers: anomalyResult.prefilterResult?.triggers?.length || 0
+                    });
+
+                    if (anomalyResult.claudeResult?.anomalies?.length > 0) {
+                        logger.warn('⚠️  NEW ANOMALIES DETECTED ⚠️');
+                        anomalyResult.claudeResult.anomalies.forEach((anomaly, i) => {
+                            logger.warn(`  ${i + 1}. [${anomaly.severity}] ${anomaly.title}`);
+                        });
+                    }
+                } else if (anomalyResult.rateLimited) {
+                    logger.debug('Anomaly detection: Claude call rate limited', {
+                        minutesRemaining: anomalyResult.minutesRemaining
+                    });
+                } else {
+                    logger.debug('Anomaly detection: No significant anomalies detected');
+                }
+            } else {
+                logger.warn('Anomaly detection failed', {
+                    reason: anomalyResult.reason || anomalyResult.error
+                });
+            }
+        } catch (anomalyError) {
+            // Log but don't crash the collector
+            logger.error('Anomaly detection threw an error', {
+                error: anomalyError.message,
+                stack: anomalyError.stack
+            });
+            logger.warn('Continuing with data collection despite anomaly detection error');
+        }
+        // ====== END PHASE 5 INTEGRATION ======
 
         return true;
 

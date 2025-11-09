@@ -3,6 +3,7 @@
 
 -- Drop existing tables if they exist (for clean setup)
 DROP TABLE IF EXISTS twitter_sentiment CASCADE;
+DROP TABLE IF EXISTS anomaly_triggers CASCADE;
 DROP TABLE IF EXISTS anomalies CASCADE;
 DROP TABLE IF EXISTS whale_wallets CASCADE;
 DROP TABLE IF EXISTS time_series_data CASCADE;
@@ -125,6 +126,36 @@ CREATE INDEX idx_anomalies_severity ON anomalies(severity);
 CREATE INDEX idx_anomalies_type ON anomalies(anomaly_type);
 CREATE INDEX idx_anomalies_status ON anomalies(status);
 CREATE INDEX idx_anomalies_active ON anomalies(detected_at DESC) WHERE status = 'active';
+
+-- Anomaly triggers table for storing pre-filter results
+CREATE TABLE anomaly_triggers (
+    id SERIAL PRIMARY KEY,
+    timestamp TIMESTAMP NOT NULL DEFAULT NOW(),
+
+    -- Pre-filter results
+    is_anomalous BOOLEAN NOT NULL,
+    should_call_claude BOOLEAN NOT NULL DEFAULT FALSE,
+
+    -- Trigger details
+    triggers JSONB, -- Array of trigger objects with metric, severity, z-score, etc.
+
+    -- Statistics snapshot
+    current_data JSONB, -- Current data point that was analyzed
+    baseline_stats JSONB, -- Baseline statistics used for comparison
+
+    -- Claude call tracking
+    claude_called BOOLEAN DEFAULT FALSE,
+    claude_call_timestamp TIMESTAMP,
+    anomaly_id INTEGER REFERENCES anomalies(id),
+
+    -- Metadata
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create indexes for anomaly trigger queries
+CREATE INDEX idx_anomaly_triggers_timestamp ON anomaly_triggers(timestamp DESC);
+CREATE INDEX idx_anomaly_triggers_is_anomalous ON anomaly_triggers(is_anomalous);
+CREATE INDEX idx_anomaly_triggers_claude_called ON anomaly_triggers(claude_called);
 
 -- Twitter sentiment analysis table
 CREATE TABLE twitter_sentiment (
