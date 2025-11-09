@@ -133,12 +133,16 @@ db.initializePool();
 
 // Start server
 server.listen(PORT, async () => {
+    const baseUrl = process.env.NODE_ENV === 'production'
+        ? 'https://etherfi-anomanly.up.railway.app/api'
+        : `http://localhost:${PORT}/api`;
+
     logger.info('========================================');
     logger.info('EtherFi Anomaly Detection API Server');
     logger.info('========================================');
     logger.info(`Server running on port ${PORT}`);
     logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
-    logger.info(`API Base URL: http://localhost:${PORT}/api`);
+    logger.info(`API Base URL: ${baseUrl}`);
     logger.info('========================================');
 
     // Check if historical baseline data needs to be loaded
