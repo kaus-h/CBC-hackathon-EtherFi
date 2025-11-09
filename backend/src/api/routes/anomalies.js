@@ -6,6 +6,7 @@ const express = require('express');
 const router = express.Router();
 const queries = require('../../database/queries');
 const logger = require('../../utils/logger');
+const { detectAnomalies } = require('../../analysis/anomaly-detector');
 
 /**
  * GET /api/anomalies?limit=10&severity=all
@@ -124,6 +125,44 @@ router.get('/:id', async (req, res) => {
         res.status(500).json({
             error: 'Internal Server Error',
             message: 'Failed to retrieve anomaly details'
+        });
+    }
+});
+
+/**
+ * POST /api/anomalies/trigger
+ * Manually trigger anomaly detection with Claude analysis
+ * Useful for testing and debugging
+ */
+router.post('/trigger', async (req, res) => {
+    try {
+        logger.info('Manual anomaly detection triggered via API');
+
+        const result = await detectAnomalies();
+
+        res.json({
+            success: result.success,
+            claudeCalled: result.claudeCalled || false,
+            anomaliesDetected: result.claudeResult?.anomalies?.length || 0,
+            prefilterResult: {
+                isAnomalous: result.prefilterResult?.isAnomalous,
+                shouldCallClaude: result.prefilterResult?.shouldCallClaude,
+                triggers: result.prefilterResult?.triggers || [],
+                maxSeverity: result.prefilterResult?.maxSeverity
+            },
+            rateLimited: result.rateLimited || false,
+            minutesRemaining: result.minutesRemaining || 0,
+            reason: result.reason,
+            duration: result.duration,
+            timestamp: new Date()
+        });
+
+    } catch (error) {
+        logger.error('Failed to trigger anomaly detection', { error: error.message });
+        res.status(500).json({
+            success: false,
+            error: 'Internal Server Error',
+            message: error.message
         });
     }
 });

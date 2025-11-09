@@ -16,7 +16,7 @@ const logger = require('../utils/logger');
  * Prevents calling Claude too frequently even if anomalies detected
  */
 const RATE_LIMIT = {
-    minIntervalMs: 30 * 60 * 1000, // 30 minutes minimum between Claude calls
+    minIntervalMs: 5 * 60 * 1000, // 5 minutes minimum between Claude calls (reduced for testing)
     lastClaudeCall: null
 };
 
