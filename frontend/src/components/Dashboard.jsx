@@ -27,7 +27,7 @@ function Dashboard() {
       const [metricsRes, anomaliesRes, historicalRes, systemRes] = await Promise.all([
         api.get('/metrics/current'),
         api.get('/anomalies?limit=20'),
-        api.get('/metrics/historical?days=7&metric=all'),
+        api.get('/metrics/historical?days=30&metric=all'),
         api.get('/system/status')
       ]);
 
@@ -109,12 +109,12 @@ function Dashboard() {
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        const res = await api.get('/metrics/historical?days=7&metric=all');
+        const res = await api.get('/metrics/historical?days=30&metric=all');
         setHistoricalData(res.data.data || []);
       } catch (err) {
         console.error('Error refreshing historical data:', err);
       }
-    }, 5 * 60 * 1000); // Every 5 minutes
+    }, 2 * 60 * 1000); // Every 2 minutes (faster refresh while historical data loads)
 
     return () => clearInterval(interval);
   }, []);
