@@ -39,7 +39,7 @@ function MetricsPanel({ metrics }) {
     },
     {
       label: 'NETWORK GAS PRICE',
-      value: metrics.avg_gas_price_gwei.toFixed(2),
+      value: metrics.avg_gas_price_gwei.toFixed(4),  // ✅ 4 decimals: 0.0792 not 0.08
       unit: 'GWEI',
       subValue: `$${metrics.avg_tx_cost_usd?.toFixed(2) || '0.00'} per TX`,
       icon: '⛽',
