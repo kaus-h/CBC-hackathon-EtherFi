@@ -105,4 +105,108 @@ router.get('/status', async (req, res) => {
     }
 });
 
+/**
+ * GET /api/system/debug
+ * Debug endpoint - check actual database contents and Claude status
+ */
+router.get('/debug', async (req, res) => {
+    try {
+        // Count total data points
+        const countQuery = 'SELECT COUNT(*) as total FROM time_series_data';
+        const countResult = await db.query(countQuery);
+        const totalPoints = parseInt(countResult.rows[0].total);
+
+        // Get date range of data
+        const rangeQuery = `
+            SELECT
+                MIN(timestamp) as oldest,
+                MAX(timestamp) as newest,
+                COUNT(*) as count
+            FROM time_series_data
+        `;
+        const rangeResult = await db.query(rangeQuery);
+        const dateRange = rangeResult.rows[0];
+
+        // Get last 10 data points
+        const recentQuery = `
+            SELECT timestamp, tvl_eth, avg_gas_price_gwei, data_source
+            FROM time_series_data
+            ORDER BY timestamp DESC
+            LIMIT 10
+        `;
+        const recentResult = await db.query(recentQuery);
+
+        // Check what API would return for 30 days
+        const apiTestQuery = `
+            SELECT COUNT(*) as api_count
+            FROM time_series_data
+            WHERE timestamp > NOW() - INTERVAL '720 hours'
+        `;
+        const apiTestResult = await db.query(apiTestQuery);
+
+        // Check Claude API key
+        const hasClaudeKey = !!process.env.ANTHROPIC_API_KEY;
+        const claudeKeyPrefix = process.env.ANTHROPIC_API_KEY
+            ? process.env.ANTHROPIC_API_KEY.substring(0, 20) + '...'
+            : 'NOT SET';
+
+        // Get anomaly detection stats
+        const detectionStats = await getDetectionStats();
+
+        // Check for anomaly triggers
+        const triggersQuery = `
+            SELECT COUNT(*) as total,
+                   COUNT(*) FILTER (WHERE claude_called = true) as claude_called_count,
+                   MAX(timestamp) as last_trigger
+            FROM anomaly_triggers
+            WHERE timestamp > NOW() - INTERVAL '24 hours'
+        `;
+        const triggersResult = await db.query(triggersQuery);
+
+        res.json({
+            database: {
+                total_data_points: totalPoints,
+                api_would_return: parseInt(apiTestResult.rows[0].api_count),
+                date_range: {
+                    oldest: dateRange.oldest,
+                    newest: dateRange.newest,
+                    span_days: dateRange.count
+                },
+                recent_points: recentResult.rows.map(r => ({
+                    timestamp: r.timestamp,
+                    tvl_eth: parseFloat(r.tvl_eth),
+                    gas_gwei: parseFloat(r.avg_gas_price_gwei),
+                    source: r.data_source
+                }))
+            },
+            claude: {
+                api_key_configured: hasClaudeKey,
+                api_key_prefix: claudeKeyPrefix,
+                model: 'claude-3-5-sonnet-20241022',
+                rate_limit_minutes: 5,
+                detection_stats: detectionStats,
+                triggers_24h: {
+                    total: parseInt(triggersResult.rows[0].total),
+                    claude_called: parseInt(triggersResult.rows[0].claude_called_count),
+                    last_trigger: triggersResult.rows[0].last_trigger
+                }
+            },
+            server: {
+                uptime_seconds: Math.round(process.uptime()),
+                memory_mb: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+                node_env: process.env.NODE_ENV,
+                timestamp: new Date().toISOString()
+            }
+        });
+
+    } catch (error) {
+        logger.error('Debug endpoint failed', { error: error.message, stack: error.stack });
+        res.status(500).json({
+            error: 'Debug failed',
+            message: error.message,
+            stack: error.stack
+        });
+    }
+});
+
 module.exports = router;
