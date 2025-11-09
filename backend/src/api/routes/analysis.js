@@ -30,8 +30,8 @@ router.post('/generate', async (req, res) => {
         // 2. Get baseline statistics (force refresh for manual analysis)
         const baselineStats = await getBaselineStatistics(30, true); // Force refresh
 
-        // Require minimum 72 data points (6 hours) for meaningful statistical analysis
-        const MIN_DATA_POINTS = 72;
+        // Require minimum 12 data points (1 hour) for meaningful statistical analysis
+        const MIN_DATA_POINTS = 12;
         if (!baselineStats || baselineStats.data_points < MIN_DATA_POINTS) {
             const currentPoints = baselineStats?.data_points || 0;
             const hoursNeeded = Math.ceil((MIN_DATA_POINTS - currentPoints) * 5 / 60); // 5 min intervals
@@ -39,7 +39,7 @@ router.post('/generate', async (req, res) => {
             return res.status(400).json({
                 success: false,
                 error: 'Insufficient baseline data',
-                message: `Need at least ${MIN_DATA_POINTS} data points (6 hours) for reliable analysis. Currently have ${currentPoints} points. Please wait ~${hoursNeeded} more hour(s) for data collection.`,
+                message: `Need at least ${MIN_DATA_POINTS} data points (1 hour) for reliable analysis. Currently have ${currentPoints} points. Please wait ~${hoursNeeded} more hour(s) for data collection.`,
                 currentDataPoints: currentPoints,
                 requiredDataPoints: MIN_DATA_POINTS,
                 estimatedWaitHours: hoursNeeded
