@@ -28,7 +28,7 @@ function Dashboard() {
         api.get('/metrics/current'),
         api.get('/anomalies?limit=20'),
         api.get('/metrics/historical?days=7&metric=all'),
-        api.get('/system/health')
+        api.get('/system/status')
       ]);
 
       setMetrics(metricsRes.data);
