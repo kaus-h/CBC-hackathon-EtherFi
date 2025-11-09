@@ -9,6 +9,8 @@ yarn.lock
 .env.development
 .env.test
 .env.production
+# Allow .env.railway.template (it's just a template with no secrets)
+!.env.railway.template
 
 # Logs
 logs/
