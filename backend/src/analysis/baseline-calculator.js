@@ -9,7 +9,7 @@ const logger = require('../utils/logger');
 
 /**
  * In-memory cache for baseline statistics
- * Recalculated only once per day
+ * Recalculated every 5 minutes during active data collection
  */
 let baselineCache = {
     data: null,
@@ -17,7 +17,8 @@ let baselineCache = {
 };
 
 /**
- * Check if cached baseline is still valid (calculated today)
+ * Check if cached baseline is still valid
+ * Cache expires after 5 minutes to allow fresh data during historical loading
  * @returns {boolean} True if cache is valid
  */
 function isCacheValid() {
@@ -25,16 +26,11 @@ function isCacheValid() {
         return false;
     }
 
-    const now = new Date();
-    const cacheDate = new Date(baselineCache.calculatedAt);
+    const now = Date.now();
+    const cacheAge = now - baselineCache.calculatedAt;
+    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-    // Check if cache is from today
-    const isToday =
-        now.getFullYear() === cacheDate.getFullYear() &&
-        now.getMonth() === cacheDate.getMonth() &&
-        now.getDate() === cacheDate.getDate();
-
-    return isToday;
+    return cacheAge < CACHE_TTL;
 }
 
 /**
@@ -185,10 +181,10 @@ async function getBaselineStatistics(days = 30, forceRefresh = false) {
         logger.info('Recalculating baseline statistics', { days, forceRefresh });
         const baseline = await calculateBaselineFromDB(days);
 
-        // Update cache
+        // Update cache with current timestamp (milliseconds)
         baselineCache = {
             data: baseline,
-            calculatedAt: new Date()
+            calculatedAt: Date.now()
         };
 
         return baseline;

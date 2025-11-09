@@ -27,8 +27,8 @@ router.post('/generate', async (req, res) => {
             });
         }
 
-        // 2. Get baseline statistics
-        const baselineStats = await getBaselineStatistics(30);
+        // 2. Get baseline statistics (force refresh for manual analysis)
+        const baselineStats = await getBaselineStatistics(30, true); // Force refresh
         if (!baselineStats || baselineStats.data_points < 1) {
             return res.status(400).json({
                 success: false,
