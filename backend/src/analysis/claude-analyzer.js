@@ -22,7 +22,7 @@ const anthropic = new Anthropic({
  * API Configuration
  */
 const CONFIG = {
-    model: 'claude-3-5-sonnet-20240620',  // Claude 3.5 Sonnet (June 2024)
+    model: 'claude-sonnet-4-5-20250929',  // Claude Sonnet 4.5 (Latest)
     maxTokens: 2000,
     maxRetries: 3,
     retryDelay: 2000, // 2 seconds
