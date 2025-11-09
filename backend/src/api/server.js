@@ -129,7 +129,7 @@ const PORT = process.env.PORT || 3001;
 db.initializePool();
 
 // Start server
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
     logger.info('========================================');
     logger.info('EtherFi Anomaly Detection API Server');
     logger.info('========================================');
@@ -137,6 +137,39 @@ server.listen(PORT, () => {
     logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
     logger.info(`API Base URL: http://localhost:${PORT}/api`);
     logger.info('========================================');
+
+    // Start data collectors in production
+    if (process.env.NODE_ENV === 'production') {
+        logger.info('========================================');
+        logger.info('Starting Data Collectors (Production)');
+        logger.info('========================================');
+
+        try {
+            const { startContinuousCollection: startBlockchainCollector } = require('../collectors/blockchain-collector');
+            const { startContinuousCollection: startTwitterCollector } = require('../collectors/twitter-collector');
+
+            // Start blockchain collector (runs every 5 minutes)
+            logger.info('Starting blockchain data collector...');
+            startBlockchainCollector().catch(err => {
+                logger.error('Blockchain collector failed to start', { error: err.message });
+            });
+
+            // Start Twitter collector (runs every 5 minutes)
+            logger.info('Starting Twitter sentiment collector...');
+            startTwitterCollector().catch(err => {
+                logger.error('Twitter collector failed to start', { error: err.message });
+            });
+
+            logger.info('Data collectors started successfully');
+            logger.info('========================================');
+        } catch (error) {
+            logger.error('Failed to start data collectors', { error: error.message });
+            logger.warn('API server will continue without data collection');
+        }
+    } else {
+        logger.info('Development mode: Data collectors not auto-started');
+        logger.info('Run collectors manually if needed');
+    }
 });
 
 // ==================== GRACEFUL SHUTDOWN ====================
