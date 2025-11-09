@@ -67,13 +67,19 @@ function Dashboard() {
     };
 
     // Listen for data updates
-    const handleMetricsUpdate = (data) => {
-      console.log('Metrics update received:', data);
+    const handleMetricsUpdate = (payload) => {
+      console.log('Metrics update received:', payload);
+      // WebSocket sends { type: 'metrics_update', data: {...} }
+      // We need just the data object
+      const data = payload.data || payload;
       setMetrics(data);
     };
 
-    const handleAnomalyDetected = (anomaly) => {
-      console.log('Anomaly detected:', anomaly);
+    const handleAnomalyDetected = (payload) => {
+      console.log('Anomaly detected:', payload);
+      // WebSocket sends { type: 'anomaly_detected', severity: ..., anomaly: {...} }
+      // We need just the anomaly object
+      const anomaly = payload.anomaly || payload;
       setAnomalies(prev => [anomaly, ...prev].slice(0, 50)); // Keep last 50
     };
 
