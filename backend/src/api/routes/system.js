@@ -34,15 +34,41 @@ router.get('/status', async (req, res) => {
             logger.warn('Database health check failed', { error: error.message });
         }
 
+        // CALCULATE REAL BLOCKCHAIN COLLECTOR SUCCESS RATE
+        const blockchainStatsQuery = `
+            SELECT
+                COUNT(*) as total,
+                COUNT(*) FILTER (WHERE collection_status = 'success') as successful
+            FROM time_series_data
+            WHERE timestamp > NOW() - INTERVAL '24 hours'
+                AND data_source = 'blockchain_collector'
+        `;
+        const blockchainStats = await db.query(blockchainStatsQuery);
+        const blockchainTotal = parseInt(blockchainStats.rows[0].total) || 0;
+        const blockchainSuccessful = parseInt(blockchainStats.rows[0].successful) || 0;
+        const blockchainSuccessRate = blockchainTotal > 0
+            ? Math.round((blockchainSuccessful / blockchainTotal) * 100)
+            : 0;
+
         // Check if collectors are running based on recent data
         const now = Date.now();
         const blockchainLastRun = latestData?.timestamp ? new Date(latestData.timestamp) : null;
         const blockchainRunning = blockchainLastRun && (now - blockchainLastRun.getTime()) < 600000; // Last 10 min
 
-        // Calculate success rates
+        // Calculate anomaly detection success rate
         const totalChecks = (detectionStats?.last24Hours?.anomalousChecks || 0) +
                            (detectionStats?.last24Hours?.normalChecks || 0);
-        const successRate = totalChecks > 0 ? 100 : 0; // Simplified - always 100% if any checks
+        const anomalySuccessRate = totalChecks > 0 ? 100 : 0;
+
+        // Check if Twitter is actually running (not disabled)
+        const twitterEnabled = !!process.env.TWITTER_BEARER_TOKEN;
+        const twitterStatsQuery = `
+            SELECT COUNT(*) as count
+            FROM twitter_sentiment
+            WHERE collected_at > NOW() - INTERVAL '24 hours'
+        `;
+        const twitterStats = await db.query(twitterStatsQuery);
+        const twitterCount = parseInt(twitterStats.rows[0].count) || 0;
 
         // Format collectors as array for frontend
         const collectors = [
@@ -50,25 +76,29 @@ router.get('/status', async (req, res) => {
                 name: 'Blockchain',
                 status: blockchainRunning ? 'healthy' : 'warning',
                 lastRun: blockchainLastRun?.toISOString(),
-                successRate: successRate,
+                successRate: blockchainSuccessRate,
                 uptime: process.uptime(),
+                collections24h: blockchainTotal,
                 errorMessage: !blockchainRunning ? 'No recent data collection' : null
             },
             {
                 name: 'Twitter Sentiment',
-                status: 'healthy',
-                lastRun: new Date().toISOString(),
-                successRate: 100,
-                uptime: process.uptime()
+                status: twitterEnabled ? (twitterCount > 0 ? 'healthy' : 'warning') : 'disabled',
+                lastRun: twitterEnabled ? new Date().toISOString() : null,
+                successRate: twitterCount > 0 ? 100 : 0,
+                uptime: process.uptime(),
+                enabled: twitterEnabled,
+                collections24h: twitterCount
             },
             {
                 name: 'Anomaly Detector',
-                status: 'healthy',
-                lastRun: detectionStats?.last24Hours?.lastClaudeCall,
-                successRate: totalChecks > 0 ? 100 : 0,
+                status: totalChecks > 0 ? 'healthy' : 'warning',
+                lastRun: detectionStats?.last24Hours?.lastCheck || detectionStats?.last24Hours?.lastClaudeCall,
+                successRate: anomalySuccessRate,
                 uptime: process.uptime(),
                 checks24h: totalChecks,
-                claudeCalls24h: detectionStats?.last24Hours?.claudeCalls || 0
+                claudeCalls24h: detectionStats?.last24Hours?.claudeCalls || 0,
+                errorMessage: totalChecks === 0 ? 'No anomaly detection runs yet' : null
             }
         ];
 
