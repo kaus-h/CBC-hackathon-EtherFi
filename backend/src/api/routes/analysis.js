@@ -76,8 +76,8 @@ router.post('/generate', async (req, res) => {
                 {
                     metric: 'tvl',
                     severity: Math.abs(tvlDeviation) > 10 ? 'HIGH' : Math.abs(tvlDeviation) > 5 ? 'MEDIUM' : 'LOW',
-                    currentValue: currentData.tvl_eth?.toFixed(2),
-                    baselineAvg: baselineStats.tvl_avg?.toFixed(2),
+                    currentValue: parseFloat(currentData.tvl_eth || 0).toFixed(2),
+                    baselineAvg: parseFloat(baselineStats.tvl_avg || 0).toFixed(2),
                     deviation: `${tvlDeviation >= 0 ? '+' : ''}${tvlDeviation.toFixed(2)}%`,
                     reason: tvlDeviation > 0
                         ? `TVL is ${tvlDeviation.toFixed(2)}% above baseline`
@@ -86,7 +86,7 @@ router.post('/generate', async (req, res) => {
                 {
                     metric: 'peg',
                     severity: pegDeviation > 1 ? 'CRITICAL' : pegDeviation > 0.5 ? 'HIGH' : pegDeviation > 0.3 ? 'MEDIUM' : 'LOW',
-                    currentValue: currentData.eeth_eth_ratio?.toFixed(6),
+                    currentValue: parseFloat(currentData.eeth_eth_ratio || 1.0).toFixed(6),
                     baselineAvg: '1.000000',
                     deviation: `${pegDeviation.toFixed(3)}%`,
                     reason: `eETH/ETH peg is ${pegDeviation.toFixed(3)}% from 1:1`
@@ -94,8 +94,8 @@ router.post('/generate', async (req, res) => {
                 {
                     metric: 'gas',
                     severity: Math.abs(gasDeviation) > 50 ? 'HIGH' : Math.abs(gasDeviation) > 20 ? 'MEDIUM' : 'LOW',
-                    currentValue: currentData.avg_gas_price_gwei?.toFixed(4),
-                    baselineAvg: baselineStats.gas_avg?.toFixed(4),
+                    currentValue: parseFloat(currentData.avg_gas_price_gwei || 0).toFixed(4),
+                    baselineAvg: parseFloat(baselineStats.gas_avg || 0).toFixed(4),
                     deviation: `${gasDeviation >= 0 ? '+' : ''}${gasDeviation.toFixed(1)}%`,
                     reason: gasDeviation > 0
                         ? `Gas price is ${gasDeviation.toFixed(1)}% above baseline`
