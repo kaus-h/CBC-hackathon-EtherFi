@@ -79,7 +79,7 @@ async function getTimeSeriesData(hours = 24) {
     const query = `
         SELECT * FROM time_series_data
         WHERE timestamp > NOW() - INTERVAL '${hours} hours'
-        ORDER BY timestamp DESC
+        ORDER BY timestamp ASC
     `;
     const result = await db.query(query);
     return result.rows;

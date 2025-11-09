@@ -71,12 +71,14 @@ function Charts({ historicalData = [] }) {
     timeRanges.find(r => r.value === timeRange)?.hours || 24
   );
 
-  // Format data for charts
-  const chartData = filteredData.map(d => ({
-    ...d,
-    timestamp: new Date(d.timestamp).getTime(),
-    formattedTime: formatTime(d.timestamp, timeRange)
-  }));
+  // Format data for charts and ensure chronological order (left to right)
+  const chartData = filteredData
+    .map(d => ({
+      ...d,
+      timestamp: new Date(d.timestamp).getTime(),
+      formattedTime: formatTime(d.timestamp, timeRange)
+    }))
+    .sort((a, b) => a.timestamp - b.timestamp); // Ascending order: oldest to newest
 
   function formatTime(timestamp, range) {
     const date = new Date(timestamp);

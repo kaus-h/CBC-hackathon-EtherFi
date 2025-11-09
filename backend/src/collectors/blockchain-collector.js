@@ -283,9 +283,10 @@ async function getValidatorMetrics() {
         const totalValidators = Math.floor(pooledEth / 32);
 
         // Calculate actual APR from staking rewards
-        // Using conservative estimate based on current Ethereum network conditions
+        // Using current estimate based on EtherFi protocol data (Nov 2025)
         // Real APR calculation: APR = (rewards / principal) * (365 / time_period)
-        const validatorApr = 0.0384; // Conservative ETH staking APR (~3.84% based on network average)
+        // Source: EtherFi combined staking+restaking APR ~3.1% as of Nov 2025
+        const validatorApr = 0.031; // Current EtherFi staking APR (~3.1% based on 2025 protocol data)
 
         // Estimate total rewards
         const totalRewardsEth = pooledEth * validatorApr * (1/365); // Daily rewards
