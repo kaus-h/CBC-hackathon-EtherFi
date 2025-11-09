@@ -1,7 +1,7 @@
 # Dependencies
 node_modules/
-package-lock.json
 yarn.lock
+# Keep package-lock.json for reproducible builds in production
 
 # Environment variables
 .env
