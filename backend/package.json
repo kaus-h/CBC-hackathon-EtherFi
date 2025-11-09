@@ -1,0 +1,40 @@
+{
+  "name": "etherfi-anomaly-detector-backend",
+  "version": "1.0.0",
+  "description": "Backend server for EtherFi Anomaly Detection System - Real-time blockchain monitoring and AI-powered anomaly detection",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "init-db": "node scripts/init-database.js",
+    "test-db": "node scripts/test-database.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "etherfi",
+    "blockchain",
+    "anomaly-detection",
+    "ethereum",
+    "defi",
+    "monitoring"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.27.0",
+    "axios": "^1.7.9",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "ethers": "^6.13.4",
+    "express": "^4.21.2",
+    "pg": "^8.13.1",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
+wsl
