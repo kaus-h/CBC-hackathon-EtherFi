@@ -232,14 +232,23 @@ async function detectAnomalies() {
         // 2. Get baseline statistics
         const baselineStats = await getBaselineStatistics(30);
 
-        if (!baselineStats || baselineStats.data_points < 10) {
+        if (!baselineStats || baselineStats.data_points < 3) {
             logger.warn('Insufficient baseline data for anomaly detection', {
-                data_points: baselineStats?.data_points || 0
+                data_points: baselineStats?.data_points || 0,
+                minimum_required: 3
             });
             return {
                 success: false,
-                reason: 'Insufficient baseline data'
+                reason: 'Insufficient baseline data (need at least 3 data points)'
             };
+        }
+
+        // Log warning if data is limited but proceed anyway
+        if (baselineStats.data_points < 10) {
+            logger.warn('Limited baseline data - anomaly detection may be less accurate', {
+                data_points: baselineStats.data_points,
+                recommended: 10
+            });
         }
 
         // 3. Get recent sentiment data
