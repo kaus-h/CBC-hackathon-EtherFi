@@ -24,7 +24,7 @@ const io = initializeWebSocket(server);
 // CORS configuration
 app.use(cors({
     origin: process.env.NODE_ENV === 'production'
-        ? false
+        ? ['https://etherfi-anomanly.up.railway.app']
         : ['http://localhost:5173', 'http://localhost:3000'],
     credentials: true
 }));
