@@ -88,7 +88,7 @@ function Dashboard() {
     websocketService.on('error', handleError);
     websocketService.on('metrics:update', handleMetricsUpdate);
     websocketService.on('anomaly:detected', handleAnomalyDetected);
-    websocketService.on('system:update', handleSystemUpdate);
+    websocketService.on('system:status', handleSystemUpdate);
 
     // Initial data fetch
     fetchInitialData();
@@ -100,7 +100,7 @@ function Dashboard() {
       websocketService.off('error', handleError);
       websocketService.off('metrics:update', handleMetricsUpdate);
       websocketService.off('anomaly:detected', handleAnomalyDetected);
-      websocketService.off('system:update', handleSystemUpdate);
+      websocketService.off('system:status', handleSystemUpdate);
       websocketService.disconnect();
     };
   }, [fetchInitialData]);
