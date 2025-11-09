@@ -55,7 +55,7 @@ async function analyzeStatisticalAnomalies(currentData, baselineStats, sentiment
             const tvlZScore = calculateZScore(
                 currentData.tvl_eth,
                 baselineStats.tvl_avg,
-                baselineStats.tvl_stddev
+                baselineStats.tvl_stddev || 0
             );
 
             const tvlChange = ((currentData.tvl_eth - baselineStats.tvl_avg) / baselineStats.tvl_avg) * 100;
@@ -117,11 +117,11 @@ async function analyzeStatisticalAnomalies(currentData, baselineStats, sentiment
             }
 
             // Also check z-score for peg
-            if (baselineStats.peg_avg && baselineStats.peg_stddev) {
+            if (baselineStats.peg_avg) {
                 const pegZScore = calculateZScore(
                     currentData.eeth_eth_ratio,
                     baselineStats.peg_avg,
-                    baselineStats.peg_stddev
+                    baselineStats.peg_stddev || 0
                 );
 
                 if (Math.abs(pegZScore) >= THRESHOLDS.Z_SCORE_HIGH && !pegSeverity) {
@@ -171,7 +171,7 @@ async function analyzeStatisticalAnomalies(currentData, baselineStats, sentiment
             const queueZScore = calculateZScore(
                 currentData.queue_size,
                 baselineStats.queue_size_avg,
-                baselineStats.queue_size_stddev
+                baselineStats.queue_size_stddev || 0
             );
 
             if (queueZScore >= THRESHOLDS.Z_SCORE_HIGH) {
@@ -196,7 +196,7 @@ async function analyzeStatisticalAnomalies(currentData, baselineStats, sentiment
             const withdrawalZScore = calculateZScore(
                 currentData.withdrawals_24h,
                 baselineStats.withdrawals_avg,
-                baselineStats.withdrawals_stddev
+                baselineStats.withdrawals_stddev || 0
             );
 
             if (withdrawalZScore >= THRESHOLDS.Z_SCORE_HIGH) {
