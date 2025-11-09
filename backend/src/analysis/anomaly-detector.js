@@ -232,22 +232,26 @@ async function detectAnomalies() {
         // 2. Get baseline statistics
         const baselineStats = await getBaselineStatistics(30);
 
-        if (!baselineStats || baselineStats.data_points < 3) {
+        // Require minimum 48 data points (4 hours) for reliable automatic detection
+        const MIN_DATA_POINTS = 48;
+        if (!baselineStats || baselineStats.data_points < MIN_DATA_POINTS) {
             logger.warn('Insufficient baseline data for anomaly detection', {
                 data_points: baselineStats?.data_points || 0,
-                minimum_required: 3
+                minimum_required: MIN_DATA_POINTS,
+                hours_of_data: Math.round((baselineStats?.data_points || 0) * 5 / 60)
             });
             return {
                 success: false,
-                reason: 'Insufficient baseline data (need at least 3 data points)'
+                reason: `Insufficient baseline data (need at least ${MIN_DATA_POINTS} data points / 4 hours)`
             };
         }
 
         // Log warning if data is limited but proceed anyway
-        if (baselineStats.data_points < 10) {
+        if (baselineStats.data_points < 144) { // Less than 12 hours
             logger.warn('Limited baseline data - anomaly detection may be less accurate', {
                 data_points: baselineStats.data_points,
-                recommended: 10
+                recommended: 144,
+                hours_of_data: Math.round(baselineStats.data_points * 5 / 60)
             });
         }
 

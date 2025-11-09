@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
 
@@ -18,12 +19,17 @@ export default function AnalysisButton() {
     setError(null);
 
     try {
+      console.log('[Analysis] Requesting AI analysis...');
       const response = await api.post('/analysis/generate');
+      console.log('[Analysis] Response received:', response.data);
       setReport(response.data);
       setShowModal(true);
+      console.log('[Analysis] Modal should now be visible');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to generate analysis report');
-      console.error('Analysis generation failed:', err);
+      const errorMsg = err.response?.data?.message || 'Failed to generate analysis report';
+      setError(errorMsg);
+      console.error('[Analysis] Generation failed:', err);
+      console.error('[Analysis] Error details:', err.response?.data);
     } finally {
       setLoading(false);
     }
@@ -106,14 +112,14 @@ export default function AnalysisButton() {
         </div>
       </motion.div>
 
-      {/* Analysis Report Modal */}
-      <AnimatePresence>
-        {showModal && report && (
+      {/* Analysis Report Modal - Rendered via Portal */}
+      {showModal && report && createPortal(
+        <AnimatePresence>
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
             onClick={closeModal}
           >
             <motion.div
@@ -322,8 +328,9 @@ export default function AnalysisButton() {
               </div>
             </motion.div>
           </motion.div>
-        )}
-      </AnimatePresence>
+        </AnimatePresence>,
+        document.body
+      )}
     </>
   );
 }
