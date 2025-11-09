@@ -37,7 +37,7 @@ function Charts({ historicalData = [] }) {
       label: 'Gas Price',
       color: '#ffaa00',
       unit: 'GWEI',
-      format: (val) => val?.toFixed(2) || '0'
+      format: (val) => val?.toFixed(4) || '0'  // ✅ 4 decimals: 0.0792 not 0.08
     },
     {
       key: 'unique_stakers',
