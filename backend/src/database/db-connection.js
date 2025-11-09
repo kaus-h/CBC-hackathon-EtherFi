@@ -12,20 +12,40 @@ let pool = null;
 
 /**
  * Database configuration from environment variables
+ * Supports both DATABASE_URL (Railway) and individual env vars (local)
  */
-const dbConfig = {
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || '5432'),
-    database: process.env.DB_NAME || 'etherfi_anomaly_db',
-    user: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD || 'postgres',
+function getDatabaseConfig() {
+    // If DATABASE_URL exists (Railway), use it
+    if (process.env.DATABASE_URL) {
+        return {
+            connectionString: process.env.DATABASE_URL,
+            ssl: process.env.NODE_ENV === 'production' ? {
+                rejectUnauthorized: false
+            } : false,
+            // Connection pool settings
+            max: parseInt(process.env.DB_POOL_MAX || '20'),
+            min: parseInt(process.env.DB_POOL_MIN || '5'),
+            idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || '30000'),
+            connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT || '10000'),
+        };
+    }
 
-    // Connection pool settings
-    max: parseInt(process.env.DB_POOL_MAX || '20'), // Maximum pool size
-    min: parseInt(process.env.DB_POOL_MIN || '5'),  // Minimum pool size
-    idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || '30000'),
-    connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT || '10000'),
-};
+    // Otherwise use individual env vars (local development)
+    return {
+        host: process.env.DB_HOST || 'localhost',
+        port: parseInt(process.env.DB_PORT || '5432'),
+        database: process.env.DB_NAME || 'etherfi_anomaly_db',
+        user: process.env.DB_USER || 'postgres',
+        password: process.env.DB_PASSWORD || 'postgres',
+        // Connection pool settings
+        max: parseInt(process.env.DB_POOL_MAX || '20'),
+        min: parseInt(process.env.DB_POOL_MIN || '5'),
+        idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || '30000'),
+        connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT || '10000'),
+    };
+}
+
+const dbConfig = getDatabaseConfig();
 
 /**
  * Initialize database connection pool
@@ -55,7 +75,13 @@ function initializePool() {
     });
 
     console.log('Database connection pool initialized');
-    console.log(`Database: ${dbConfig.database} on ${dbConfig.host}:${dbConfig.port}`);
+    if (dbConfig.connectionString) {
+        // Don't log full connection string (contains password)
+        console.log('Using DATABASE_URL connection string');
+        console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    } else {
+        console.log(`Database: ${dbConfig.database} on ${dbConfig.host}:${dbConfig.port}`);
+    }
     console.log(`Pool size: ${dbConfig.min}-${dbConfig.max} connections`);
 
     return pool;
