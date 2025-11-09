@@ -1,6 +1,10 @@
 import { io } from 'socket.io-client';
 
-const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:3001';
+// Use production URL when deployed, localhost for development
+const WS_URL = import.meta.env.VITE_WS_URL
+  || (import.meta.env.PROD
+    ? 'https://etherfi-anomanly.up.railway.app'
+    : 'http://localhost:3001');
 
 class WebSocketService {
   constructor() {
