@@ -58,18 +58,23 @@ function constructPrompt(triggerData, recentData, baselineStats) {
         };
     });
 
+    const limitedData = baselineStats.data_points < 10;
+    const dataWarning = limitedData
+        ? `\n⚠️ WARNING: Limited baseline data (${baselineStats.data_points} points). Analysis confidence may be lower.`
+        : '';
+
     const prompt = `You are an autonomous anomaly detection system for EtherFi, a major Ethereum liquid staking protocol.
 
 PROTOCOL CONTEXT:
 EtherFi allows users to stake ETH and receive eETH (liquid staking token) that maintains ~1:1 peg with ETH.
 Current TVL: ~$9.4B USD. Users can deposit, withdraw, and use eETH in DeFi while earning staking rewards.
 
-BASELINE DATA (30-day normal patterns):
-- TVL Average: ${baselineStats.tvl_avg.toFixed(2)} ETH (StdDev: ±${baselineStats.tvl_stddev.toFixed(2)})
+BASELINE DATA (30-day normal patterns):${dataWarning}
+- TVL Average: ${baselineStats.tvl_avg.toFixed(2)} ETH (StdDev: ±${(baselineStats.tvl_stddev || 0).toFixed(2)})
 - TVL Range: ${baselineStats.tvl_min.toFixed(2)} - ${baselineStats.tvl_max.toFixed(2)} ETH
-- Peg Average: ${baselineStats.peg_avg.toFixed(6)} (StdDev: ±${baselineStats.peg_stddev.toFixed(6)})
-- Peg Range: ${baselineStats.peg_min.toFixed(6)} - ${baselineStats.peg_max.toFixed(6)}
-- Gas Average: ${baselineStats.gas_avg.toFixed(2)} gwei (StdDev: ±${baselineStats.gas_stddev.toFixed(2)})
+- Peg Average: ${baselineStats.peg_avg.toFixed(6)} (StdDev: ±${(baselineStats.peg_stddev || 0).toFixed(6)})
+- Peg Range: ${(baselineStats.peg_min || 0).toFixed(6)} - ${(baselineStats.peg_max || 0).toFixed(6)}
+- Gas Average: ${baselineStats.gas_avg.toFixed(2)} gwei (StdDev: ±${(baselineStats.gas_stddev || 0).toFixed(2)})
 - Sentiment Average: ${baselineStats.sentiment_avg.toFixed(3)} score (${(baselineStats.positive_pct * 100).toFixed(1)}% positive)
 - Data Period: ${baselineStats.period_days} days (${baselineStats.data_points} data points)
 
@@ -118,6 +123,9 @@ Return ONLY valid JSON (no markdown, no explanations outside JSON):
     }
   ],
   "overallAssessment": "1-2 sentence summary of current protocol health",
+  "riskLevel": "LOW|MEDIUM|HIGH|CRITICAL",
+  "keyFindings": ["3-5 brief bullet points of key observations"],
+  "recommendations": ["2-4 actionable recommendations for users/operators"],
   "monitoringPriority": "What to watch most closely in next cycles",
   "falseAlarmProbability": 0.2
 }`;
