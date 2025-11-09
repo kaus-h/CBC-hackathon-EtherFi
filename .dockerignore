@@ -1,0 +1,19 @@
+# Ignore node_modules to prevent overwriting installed dependencies
+node_modules
+**/node_modules
+npm-debug.log
+.git
+.env
+.env.local
+dist
+build
+.next
+.cache
+
+# Ignore unnecessary files
+*.md
+!README.md
+.gitignore
+.vscode
+.idea
+*.log

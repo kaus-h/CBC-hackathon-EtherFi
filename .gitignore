@@ -1,7 +1,7 @@
 # Dependencies
 node_modules/
-package-lock.json
 yarn.lock
+# Keep package-lock.json for reproducible builds in production
 
 # Environment variables
 .env
@@ -9,6 +9,10 @@ yarn.lock
 .env.development
 .env.test
 .env.production
+# Allow frontend/.env.production (contains only public URLs, no secrets)
+!frontend/.env.production
+# Allow .env.railway.template (it's just a template with no secrets)
+!.env.railway.template
 
 # Logs
 logs/

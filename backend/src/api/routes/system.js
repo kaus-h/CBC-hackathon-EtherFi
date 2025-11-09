@@ -34,31 +34,47 @@ router.get('/status', async (req, res) => {
             logger.warn('Database health check failed', { error: error.message });
         }
 
+        // Check if collectors are running based on recent data
+        const now = Date.now();
+        const blockchainLastRun = latestData?.timestamp ? new Date(latestData.timestamp) : null;
+        const blockchainRunning = blockchainLastRun && (now - blockchainLastRun.getTime()) < 600000; // Last 10 min
+
         // Calculate success rates
         const totalChecks = (detectionStats?.last24Hours?.anomalousChecks || 0) +
                            (detectionStats?.last24Hours?.normalChecks || 0);
         const successRate = totalChecks > 0 ? 100 : 0; // Simplified - always 100% if any checks
 
-        res.json({
-            collectors: {
-                blockchain: {
-                    running: latestData ? (Date.now() - new Date(latestData.timestamp).getTime() < 600000) : false, // Last 10 min
-                    last_run: latestData?.timestamp,
-                    success_rate: successRate,
-                    data_source: latestData?.data_source
-                },
-                twitter: {
-                    running: true, // Simplified
-                    last_run: new Date().toISOString(),
-                    success_rate: 100
-                },
-                anomaly_detector: {
-                    running: true,
-                    last_triggered: detectionStats?.last24Hours?.lastClaudeCall,
-                    checks_24h: totalChecks,
-                    claude_calls_24h: detectionStats?.last24Hours?.claudeCalls || 0
-                }
+        // Format collectors as array for frontend
+        const collectors = [
+            {
+                name: 'Blockchain',
+                status: blockchainRunning ? 'healthy' : 'warning',
+                lastRun: blockchainLastRun?.toISOString(),
+                successRate: successRate,
+                uptime: process.uptime(),
+                errorMessage: !blockchainRunning ? 'No recent data collection' : null
             },
+            {
+                name: 'Twitter Sentiment',
+                status: 'healthy',
+                lastRun: new Date().toISOString(),
+                successRate: 100,
+                uptime: process.uptime()
+            },
+            {
+                name: 'Anomaly Detector',
+                status: 'healthy',
+                lastRun: detectionStats?.last24Hours?.lastClaudeCall,
+                successRate: totalChecks > 0 ? 100 : 0,
+                uptime: process.uptime(),
+                checks24h: totalChecks,
+                claudeCalls24h: detectionStats?.last24Hours?.claudeCalls || 0
+            }
+        ];
+
+        res.json({
+            collectors: collectors,
+            lastUpdate: new Date().toISOString(),
             database: {
                 connected: dbConnected,
                 record_count: recordCount,

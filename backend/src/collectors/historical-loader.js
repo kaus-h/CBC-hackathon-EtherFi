@@ -274,15 +274,28 @@ async function fetchHistoricalDataPoint(date, blockNumber, topHolders) {
             blockNumber
         );
 
-        // Calculate eETH/ETH ratio (should be close to 1.0)
-        const eethEthRatio = 0.998 + (Math.random() * 0.004 - 0.002); // Approximate with small variation
+        // Calculate REAL eETH/ETH ratio from actual data
+        const totalSupplyFloat = parseFloat(totalSupply);
+        const tvlEthFloat = parseFloat(tvlEth);
+        const eethEthRatio = totalSupplyFloat > 0 ? tvlEthFloat / totalSupplyFloat : 1.0;
+
+        // Get historical gas price from block
+        let gasPrice = null;
+        try {
+            const block = await provider.getBlock(blockNumber);
+            if (block && block.baseFeePerGas) {
+                gasPrice = parseFloat(ethers.formatUnits(block.baseFeePerGas, 'gwei'));
+            }
+        } catch (gasErr) {
+            logger.warn(`Could not fetch gas price for block ${blockNumber}`, { error: gasErr.message });
+        }
 
         const dataPoint = {
             timestamp: date,
             tvl_usd: tvlUsd,
-            tvl_eth: parseFloat(tvlEth),
-            unique_stakers: Math.floor(parseFloat(totalSupply) * 0.1), // Rough estimate
-            total_validators: Math.floor(parseFloat(tvlEth) / 32), // 32 ETH per validator
+            tvl_eth: tvlEthFloat,
+            unique_stakers: Math.floor(totalSupplyFloat * 0.1), // Rough estimate
+            total_validators: Math.floor(tvlEthFloat / 32), // 32 ETH per validator
             deposits_24h: txStats.deposits,
             withdrawals_24h: txStats.withdrawals,
             deposit_volume_eth: txStats.depositVolume,
@@ -292,9 +305,9 @@ async function fetchHistoricalDataPoint(date, blockNumber, topHolders) {
             queue_size: 0, // Will be populated in real-time collection
             queue_eth_amount: 0,
             avg_queue_wait_hours: 0,
-            validator_apr: 0.04 + (Math.random() * 0.02), // Approximate APR
-            total_rewards_eth: parseFloat(tvlEth) * 0.04 * 0.1, // Rough estimate
-            avg_gas_price_gwei: 20 + (Math.random() * 30), // Approximate
+            validator_apr: 0.0384, // Conservative ETH staking APR (match real-time collector)
+            total_rewards_eth: tvlEthFloat * 0.0384 / 365, // Daily rewards based on conservative APR
+            avg_gas_price_gwei: gasPrice, // REAL historical gas price from block
             avg_tx_cost_usd: 0,
             data_source: 'historical_loader',
             collection_status: 'success'

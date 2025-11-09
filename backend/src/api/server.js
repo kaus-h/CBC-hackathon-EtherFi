@@ -24,7 +24,7 @@ const io = initializeWebSocket(server);
 // CORS configuration
 app.use(cors({
     origin: process.env.NODE_ENV === 'production'
-        ? false
+        ? ['https://etherfi-anomanly.up.railway.app']
         : ['http://localhost:5173', 'http://localhost:3000'],
     credentials: true
 }));
@@ -129,7 +129,7 @@ const PORT = process.env.PORT || 3001;
 db.initializePool();
 
 // Start server
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
     logger.info('========================================');
     logger.info('EtherFi Anomaly Detection API Server');
     logger.info('========================================');
@@ -137,6 +137,91 @@ server.listen(PORT, () => {
     logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
     logger.info(`API Base URL: http://localhost:${PORT}/api`);
     logger.info('========================================');
+
+    // Check if historical baseline data needs to be loaded
+    if (process.env.NODE_ENV === 'production') {
+        try {
+            const dataCheck = await db.query('SELECT COUNT(*) FROM time_series_data');
+            const recordCount = parseInt(dataCheck.rows[0].count);
+
+            if (recordCount < 10) {
+                logger.info('========================================');
+                logger.info('Historical Baseline Data Needed');
+                logger.info('========================================');
+                logger.warn(`Only ${recordCount} data points found`);
+                logger.info('Loading 30 days of historical baseline data...');
+                logger.info('This will run in the background (~15-20 minutes)');
+                logger.info('Note: Uses Etherscan & Alchemy APIs');
+                logger.info('========================================');
+
+                // Load historical data in background (non-blocking)
+                const { loadHistoricalData } = require('../collectors/historical-loader');
+                loadHistoricalData(30).then(() => {
+                    logger.success('🎉 Historical baseline data loaded successfully!');
+                    logger.info('Dashboard will now show 30 days of historical charts');
+                }).catch(err => {
+                    logger.error('Failed to load historical data', {
+                        error: err.message,
+                        stack: err.stack
+                    });
+                    logger.warn('Continuing with real-time collection only');
+                });
+            } else {
+                logger.info(`✅ Database has ${recordCount} data points - baseline established`);
+            }
+        } catch (error) {
+            logger.warn('Could not check historical data', { error: error.message });
+        }
+    }
+
+    // Start data collectors in production
+    if (process.env.NODE_ENV === 'production') {
+        logger.info('========================================');
+        logger.info('Starting Data Collectors (Production)');
+        logger.info('========================================');
+
+        try {
+            const { startContinuousCollection: startBlockchainCollector } = require('../collectors/blockchain-collector');
+            const { startContinuousCollection: startTwitterCollector } = require('../collectors/twitter-collector');
+
+            // Start blockchain collector (runs every 5 minutes)
+            logger.info('Starting blockchain data collector...');
+            logger.info('Collector will use: Alchemy, Etherscan, Chainlink oracles');
+            startBlockchainCollector().catch(err => {
+                logger.error('Blockchain collector failed to start', {
+                    error: err.message,
+                    stack: err.stack
+                });
+            });
+
+            // Twitter collector - DISABLED (no real API configured)
+            // To enable: Set TWITTER_BEARER_TOKEN environment variable
+            if (process.env.TWITTER_BEARER_TOKEN) {
+                logger.info('Starting Twitter sentiment collector...');
+                startTwitterCollector().catch(err => {
+                    logger.error('Twitter collector failed to start', {
+                        error: err.message,
+                        stack: err.stack
+                    });
+                });
+            } else {
+                logger.warn('Twitter collector DISABLED - no TWITTER_BEARER_TOKEN configured');
+                logger.info('Twitter sentiment data will not be collected');
+            }
+
+            logger.info('Data collectors started successfully');
+            logger.info('========================================');
+        } catch (error) {
+            logger.error('Failed to start data collectors', {
+                error: error.message,
+                stack: error.stack
+            });
+            logger.warn('API server will continue without data collection');
+        }
+    } else {
+        logger.info('Development mode: Data collectors not auto-started');
+        logger.info('Run collectors manually if needed');
+    }
 });
 
 // ==================== GRACEFUL SHUTDOWN ====================
