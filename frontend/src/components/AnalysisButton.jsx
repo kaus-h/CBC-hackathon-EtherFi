@@ -21,10 +21,23 @@ export default function AnalysisButton() {
     try {
       console.log('[Analysis] Requesting AI analysis...');
       const response = await api.post('/analysis/generate');
-      console.log('[Analysis] Response received:', response.data);
+      console.log('[Analysis] Full response:', response);
+      console.log('[Analysis] Response data:', response.data);
+      console.log('[Analysis] Has current_state:', !!response.data?.current_state);
+      console.log('[Analysis] Has baseline_comparison:', !!response.data?.baseline_comparison);
+      console.log('[Analysis] Has analysis:', !!response.data?.analysis);
+      console.log('[Analysis] Analysis structure:', response.data?.analysis);
+
       setReport(response.data);
       setShowModal(true);
-      console.log('[Analysis] Modal should now be visible');
+
+      console.log('[Analysis] State updated - showModal:', true);
+      console.log('[Analysis] State updated - report:', response.data);
+
+      // Force a small delay to ensure state update
+      setTimeout(() => {
+        console.log('[Analysis] After timeout - showModal state should be visible');
+      }, 100);
     } catch (err) {
       const errorMsg = err.response?.data?.message || 'Failed to generate analysis report';
       setError(errorMsg);
@@ -113,15 +126,17 @@ export default function AnalysisButton() {
       </motion.div>
 
       {/* Analysis Report Modal - Rendered via Portal */}
-      {showModal && report && createPortal(
-        <AnimatePresence>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-            onClick={closeModal}
-          >
+      {showModal && report && (() => {
+        console.log('[Analysis] Rendering modal - showModal:', showModal, 'report:', !!report);
+        return createPortal(
+          <AnimatePresence>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+              onClick={closeModal}
+            >
             <motion.div
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
@@ -149,7 +164,19 @@ export default function AnalysisButton() {
 
               {/* Modal Content */}
               <div className="p-6 space-y-6">
+                {/* Debug Info */}
+                <div className="bg-yellow-500/10 border border-yellow-500 p-3 rounded">
+                  <div className="text-xs font-mono text-yellow-200">
+                    DEBUG: Modal is rendering!
+                    <br />Has current_state: {report.current_state ? 'YES' : 'NO'}
+                    <br />Has baseline_comparison: {report.baseline_comparison ? 'YES' : 'NO'}
+                    <br />Has analysis: {report.analysis ? 'YES' : 'NO'}
+                    <br />Analysis keys: {report.analysis ? Object.keys(report.analysis).join(', ') : 'N/A'}
+                  </div>
+                </div>
+
                 {/* Current State */}
+                {report.current_state && (
                 <section>
                   <h3 className="text-lg font-display font-bold text-terminal-text mb-3 flex items-center">
                     <span className="mr-2">📊</span>
@@ -194,8 +221,10 @@ export default function AnalysisButton() {
                     </div>
                   </div>
                 </section>
+                )}
 
                 {/* Baseline Comparison */}
+                {report.baseline_comparison && (
                 <section>
                   <h3 className="text-lg font-display font-bold text-terminal-text mb-3 flex items-center">
                     <span className="mr-2">📈</span>
@@ -225,6 +254,7 @@ export default function AnalysisButton() {
                     Based on {report.baseline_comparison.baseline_data_points} data points
                   </div>
                 </section>
+                )}
 
                 {/* Claude Analysis */}
                 {report.analysis && (
@@ -330,7 +360,8 @@ export default function AnalysisButton() {
           </motion.div>
         </AnimatePresence>,
         document.body
-      )}
+      );
+      })()}
     </>
   );
 }
