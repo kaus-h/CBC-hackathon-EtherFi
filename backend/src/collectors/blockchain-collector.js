@@ -554,6 +554,26 @@ async function collectCurrentData() {
         }
         // ====== END PHASE 5 INTEGRATION ======
 
+        // ====== PHASE 7 INTEGRATION: WEBSOCKET BROADCAST ======
+        // Broadcast metrics update to connected clients
+        try {
+            const { broadcastMetricsUpdate } = require('../api/websocket');
+            broadcastMetricsUpdate({
+                tvl_eth: dataPoint.tvl_eth,
+                tvl_usd: dataPoint.tvl_usd,
+                eeth_eth_ratio: dataPoint.eeth_eth_ratio,
+                avg_gas_price_gwei: dataPoint.avg_gas_price_gwei,
+                unique_stakers: dataPoint.unique_stakers,
+                total_validators: dataPoint.total_validators,
+                timestamp: new Date().toISOString()
+            });
+            logger.debug('Broadcasted metrics update to WebSocket clients');
+        } catch (wsError) {
+            // Don't crash if WebSocket fails
+            logger.debug('WebSocket broadcast skipped (server may not be running)');
+        }
+        // ====== END PHASE 7 INTEGRATION ======
+
         return true;
 
     } catch (error) {

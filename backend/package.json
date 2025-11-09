@@ -2,10 +2,10 @@
   "name": "etherfi-anomaly-detector-backend",
   "version": "1.0.0",
   "description": "Backend server for EtherFi Anomaly Detection System - Real-time blockchain monitoring and AI-powered anomaly detection",
-  "main": "src/server.js",
+  "main": "src/api/server.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
+    "start": "node src/api/server.js",
+    "dev": "nodemon src/api/server.js",
     "init-db": "node scripts/init-database.js",
     "test-db": "node scripts/test-database.js",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -28,6 +28,7 @@
     "ethers": "^6.13.4",
     "express": "^4.21.2",
     "pg": "^8.13.1",
+    "socket.io": "^4.7.2",
     "ws": "^8.18.0"
   },
   "devDependencies": {
