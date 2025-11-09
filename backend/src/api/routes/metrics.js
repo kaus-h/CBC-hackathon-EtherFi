@@ -71,12 +71,16 @@ router.get('/historical', async (req, res) => {
         if (metric === 'all') {
             result = data.map(point => ({
                 timestamp: point.timestamp,
-                tvl_eth: parseFloat(point.tvl_eth),
-                eeth_eth_ratio: parseFloat(point.eeth_eth_ratio),
-                avg_gas_price_gwei: parseFloat(point.avg_gas_price_gwei),
-                queue_size: parseInt(point.queue_size),
-                deposits_24h: parseInt(point.deposits_24h),
-                withdrawals_24h: parseInt(point.withdrawals_24h)
+                tvl_eth: parseFloat(point.tvl_eth) || 0,
+                tvl_usd: parseFloat(point.tvl_usd) || 0,
+                eeth_eth_ratio: parseFloat(point.eeth_eth_ratio) || 1.0,
+                avg_gas_price_gwei: parseFloat(point.avg_gas_price_gwei) || 0,
+                unique_stakers: parseInt(point.unique_stakers) || 0,
+                total_validators: parseInt(point.total_validators) || 0,
+                queue_size: parseInt(point.queue_size) || 0,
+                deposits_24h: parseInt(point.deposits_24h) || 0,
+                withdrawals_24h: parseInt(point.withdrawals_24h) || 0,
+                validator_apr: parseFloat(point.validator_apr) || 0
             }));
         } else {
             result = data.map(point => ({
