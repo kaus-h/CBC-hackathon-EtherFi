@@ -327,6 +327,19 @@ async function detectAnomalies() {
                 anomaliesDetected: claudeResult.anomalies.length,
                 overallAssessment: claudeResult.analysis?.overallAssessment
             });
+
+            // ====== PHASE 7: WEBSOCKET BROADCAST ======
+            // Broadcast anomaly alerts to connected clients
+            try {
+                const { broadcastAnomalyDetected } = require('../api/websocket');
+                claudeResult.anomalies.forEach(anomaly => {
+                    broadcastAnomalyDetected(anomaly);
+                });
+                logger.debug('Broadcasted anomaly alerts to WebSocket clients');
+            } catch (wsError) {
+                logger.debug('WebSocket broadcast skipped (server may not be running)');
+            }
+            // ====== END PHASE 7 ======
         } else {
             logger.warn('Claude analysis completed but returned no anomalies or failed', {
                 success: claudeResult.success,
