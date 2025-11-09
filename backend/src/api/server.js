@@ -138,6 +138,42 @@ server.listen(PORT, async () => {
     logger.info(`API Base URL: http://localhost:${PORT}/api`);
     logger.info('========================================');
 
+    // Check if historical baseline data needs to be loaded
+    if (process.env.NODE_ENV === 'production') {
+        try {
+            const dataCheck = await db.query('SELECT COUNT(*) FROM time_series_data');
+            const recordCount = parseInt(dataCheck.rows[0].count);
+
+            if (recordCount < 10) {
+                logger.info('========================================');
+                logger.info('Historical Baseline Data Needed');
+                logger.info('========================================');
+                logger.warn(`Only ${recordCount} data points found`);
+                logger.info('Loading 7 days of historical baseline data...');
+                logger.info('This will run in the background (~5-10 minutes)');
+                logger.info('Note: Uses Etherscan & Alchemy APIs');
+                logger.info('========================================');
+
+                // Load historical data in background (non-blocking)
+                const { loadHistoricalData } = require('../collectors/historical-loader');
+                loadHistoricalData(7).then(() => {
+                    logger.success('🎉 Historical baseline data loaded successfully!');
+                    logger.info('Dashboard will now show 7 days of historical charts');
+                }).catch(err => {
+                    logger.error('Failed to load historical data', {
+                        error: err.message,
+                        stack: err.stack
+                    });
+                    logger.warn('Continuing with real-time collection only');
+                });
+            } else {
+                logger.info(`✅ Database has ${recordCount} data points - baseline established`);
+            }
+        } catch (error) {
+            logger.warn('Could not check historical data', { error: error.message });
+        }
+    }
+
     // Start data collectors in production
     if (process.env.NODE_ENV === 'production') {
         logger.info('========================================');
@@ -150,20 +186,30 @@ server.listen(PORT, async () => {
 
             // Start blockchain collector (runs every 5 minutes)
             logger.info('Starting blockchain data collector...');
+            logger.info('Collector will use: Alchemy, Etherscan, Chainlink oracles');
             startBlockchainCollector().catch(err => {
-                logger.error('Blockchain collector failed to start', { error: err.message });
+                logger.error('Blockchain collector failed to start', {
+                    error: err.message,
+                    stack: err.stack
+                });
             });
 
             // Start Twitter collector (runs every 5 minutes)
             logger.info('Starting Twitter sentiment collector...');
             startTwitterCollector().catch(err => {
-                logger.error('Twitter collector failed to start', { error: err.message });
+                logger.error('Twitter collector failed to start', {
+                    error: err.message,
+                    stack: err.stack
+                });
             });
 
             logger.info('Data collectors started successfully');
             logger.info('========================================');
         } catch (error) {
-            logger.error('Failed to start data collectors', { error: error.message });
+            logger.error('Failed to start data collectors', {
+                error: error.message,
+                stack: error.stack
+            });
             logger.warn('API server will continue without data collection');
         }
     } else {
