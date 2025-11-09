@@ -1,0 +1,158 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-terminal-border;
+  }
+
+  body {
+    @apply bg-terminal-bg text-terminal-text font-mono antialiased;
+    background-image:
+      linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    background-position: -1px -1px;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-bold;
+  }
+}
+
+@layer components {
+  .terminal-card {
+    @apply bg-terminal-surface border border-terminal-border rounded-none p-6;
+    @apply shadow-lg relative overflow-hidden;
+  }
+
+  .terminal-card::before {
+    content: '';
+    @apply absolute top-0 left-0 w-full h-px;
+    background: linear-gradient(90deg, transparent, theme('colors.terminal.accent'), transparent);
+    opacity: 0.3;
+  }
+
+  .terminal-glow {
+    @apply shadow-glow;
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+  }
+
+  .metric-value {
+    @apply text-5xl font-mono font-bold tracking-tight;
+    @apply text-terminal-accent;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .status-indicator {
+    @apply w-3 h-3 rounded-full animate-pulse-glow;
+  }
+
+  .status-online {
+    @apply bg-terminal-success shadow-glow;
+  }
+
+  .status-offline {
+    @apply bg-terminal-critical shadow-glow-critical;
+  }
+
+  .anomaly-alert {
+    @apply border-l-4 p-4 mb-4;
+    @apply bg-terminal-surface/50 backdrop-blur-sm;
+    @apply transition-all duration-300 hover:translate-x-1;
+  }
+
+  .anomaly-critical {
+    @apply border-terminal-critical;
+    box-shadow: -4px 0 20px rgba(255, 0, 60, 0.2);
+  }
+
+  .anomaly-high {
+    @apply border-terminal-warning;
+    box-shadow: -4px 0 20px rgba(255, 170, 0, 0.2);
+  }
+
+  .anomaly-medium {
+    @apply border-terminal-accent;
+    box-shadow: -4px 0 20px rgba(0, 255, 255, 0.15);
+  }
+
+  .anomaly-low {
+    @apply border-terminal-success;
+    box-shadow: -4px 0 20px rgba(0, 255, 136, 0.15);
+  }
+
+  .btn-terminal {
+    @apply px-4 py-2 font-mono font-bold;
+    @apply bg-terminal-surface border-2 border-terminal-accent;
+    @apply text-terminal-accent uppercase tracking-wider;
+    @apply transition-all duration-200;
+    @apply hover:bg-terminal-accent hover:text-terminal-bg;
+    @apply hover:shadow-glow;
+  }
+
+  .scanline {
+    @apply pointer-events-none fixed inset-0 z-50;
+    background: linear-gradient(
+      to bottom,
+      transparent 50%,
+      rgba(0, 255, 255, 0.02) 51%
+    );
+    animation: scanline 8s linear infinite;
+  }
+
+  .chrome-effect {
+    @apply relative;
+  }
+
+  .chrome-effect::after {
+    content: '';
+    @apply absolute inset-0 rounded-none;
+    background: linear-gradient(
+      135deg,
+      rgba(0, 255, 255, 0.1) 0%,
+      transparent 50%,
+      rgba(0, 255, 255, 0.05) 100%
+    );
+    pointer-events: none;
+  }
+}
+
+@layer utilities {
+  .text-glow {
+    text-shadow: 0 0 10px currentColor;
+  }
+
+  .text-glow-strong {
+    text-shadow: 0 0 20px currentColor, 0 0 40px currentColor;
+  }
+
+  .border-glow {
+    box-shadow: 0 0 10px currentColor, inset 0 0 10px currentColor;
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-terminal-bg;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-terminal-accent/30;
+  @apply border border-terminal-accent/50;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-terminal-accent/50;
+}
+
+/* Selection styling */
+::selection {
+  @apply bg-terminal-accent text-terminal-bg;
+}
