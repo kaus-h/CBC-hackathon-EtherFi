@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import api from '../utils/api';
+import api from '../services/api';
 
 export default function AnalysisButton() {
   const [loading, setLoading] = useState(false);
