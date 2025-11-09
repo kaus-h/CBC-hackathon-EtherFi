@@ -7,6 +7,7 @@
     "start": "node src/api/server.js",
     "dev": "nodemon src/api/server.js",
     "init-db": "node scripts/init-database.js",
+    "railway-init": "node scripts/railway-db-init.js",
     "test-db": "node scripts/test-database.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
