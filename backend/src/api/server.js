@@ -149,16 +149,16 @@ server.listen(PORT, async () => {
                 logger.info('Historical Baseline Data Needed');
                 logger.info('========================================');
                 logger.warn(`Only ${recordCount} data points found`);
-                logger.info('Loading 7 days of historical baseline data...');
-                logger.info('This will run in the background (~5-10 minutes)');
+                logger.info('Loading 30 days of historical baseline data...');
+                logger.info('This will run in the background (~15-20 minutes)');
                 logger.info('Note: Uses Etherscan & Alchemy APIs');
                 logger.info('========================================');
 
                 // Load historical data in background (non-blocking)
                 const { loadHistoricalData } = require('../collectors/historical-loader');
-                loadHistoricalData(7).then(() => {
+                loadHistoricalData(30).then(() => {
                     logger.success('🎉 Historical baseline data loaded successfully!');
-                    logger.info('Dashboard will now show 7 days of historical charts');
+                    logger.info('Dashboard will now show 30 days of historical charts');
                 }).catch(err => {
                     logger.error('Failed to load historical data', {
                         error: err.message,
@@ -194,14 +194,20 @@ server.listen(PORT, async () => {
                 });
             });
 
-            // Start Twitter collector (runs every 5 minutes)
-            logger.info('Starting Twitter sentiment collector...');
-            startTwitterCollector().catch(err => {
-                logger.error('Twitter collector failed to start', {
-                    error: err.message,
-                    stack: err.stack
+            // Twitter collector - DISABLED (no real API configured)
+            // To enable: Set TWITTER_BEARER_TOKEN environment variable
+            if (process.env.TWITTER_BEARER_TOKEN) {
+                logger.info('Starting Twitter sentiment collector...');
+                startTwitterCollector().catch(err => {
+                    logger.error('Twitter collector failed to start', {
+                        error: err.message,
+                        stack: err.stack
+                    });
                 });
-            });
+            } else {
+                logger.warn('Twitter collector DISABLED - no TWITTER_BEARER_TOKEN configured');
+                logger.info('Twitter sentiment data will not be collected');
+            }
 
             logger.info('Data collectors started successfully');
             logger.info('========================================');
