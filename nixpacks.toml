@@ -4,7 +4,7 @@ nixPkgs = ["nodejs-18_x"]
 [phases.build]
 cmds = [
   "cd backend && rm -rf node_modules && npm install --production=false",
-  "cd frontend && rm -rf node_modules && npm install",
+  "cd frontend && rm -rf node_modules && npm install --include=dev",
   "cd frontend && npm run build",
   "cd backend && npm run railway-init || echo 'Database initialization will run on first start'"
 ]
