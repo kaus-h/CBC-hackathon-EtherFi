@@ -459,9 +459,10 @@ async function loadHistoricalData(days = 30) {
             stack: error.stack
         });
         throw error;
-    } finally {
-        await db.closePool();
     }
+    // NOTE: Do NOT close the database pool here!
+    // This function runs as a background task while the server is still running.
+    // Closing the pool would kill all database connections for the entire app.
 }
 
 // Run if called directly
