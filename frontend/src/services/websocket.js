@@ -6,6 +6,9 @@ class WebSocketService {
   constructor() {
     this.socket = null;
     this.listeners = {
+      'connect': [],
+      'disconnect': [],
+      'error': [],
       'metrics:update': [],
       'anomaly:detected': [],
       'system:status': [],
@@ -31,18 +34,27 @@ class WebSocketService {
 
     this.socket.on('connect', () => {
       console.log('[WS] Connected:', this.socket.id);
+      // Trigger custom connect listeners
+      this.listeners['connect'].forEach(callback => callback());
     });
 
     this.socket.on('disconnect', (reason) => {
       console.log('[WS] Disconnected:', reason);
+      // Trigger custom disconnect listeners
+      this.listeners['disconnect'].forEach(callback => callback(reason));
     });
 
     this.socket.on('connect_error', (error) => {
       console.error('[WS] Connection error:', error.message);
+      // Trigger custom error listeners
+      this.listeners['error'].forEach(callback => callback(error));
     });
 
-    // Set up event listeners
+    // Set up event listeners for custom events
     Object.keys(this.listeners).forEach(event => {
+      // Skip Socket.io built-in events (already handled above)
+      if (['connect', 'disconnect', 'error'].includes(event)) return;
+
       this.socket.on(event, (data) => {
         console.log(`[WS] Event: ${event}`, data);
         this.listeners[event].forEach(callback => callback(data));
